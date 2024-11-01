@@ -40,7 +40,7 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
     try {
       // Here you'd fetch the summary from a metadata API or a custom endpoint
       // For this example, we'll mock the summary response.
-      const response = await fetch(`https://api.linkpreview.net/?key={key}&q=${url}`);
+      const response = await fetch(`${process.env.REACT_APP_LINK_PREVIEW_API}&q=${url}`);
       const data = await response.json();
       setLinkSummary(data.description || "No summary available");
       const updatedLink = [{ url, description: data.description }, ...(notes.link || [])];
@@ -80,11 +80,12 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
           vocab: word,
           partOfSpeech: meanings[0]?.partOfSpeech || "",
           pronunciation: phonetic || (phonetics[0] ? phonetics[0].text : ""),
+          audio: phonetics[0] ? phonetics[0].audio : "",
           definition: meanings[0]?.definitions[0]?.definition || "",
           example: foundExample,
-          meanings: meanings || []
+          //meanings: meanings || []
         };
-
+        console.log(newVocabEntry);
         const updatedVocabulary = [newVocabEntry, ...(notes.vocabulary || [])];
         onNotesChange({ ...notes, vocabulary: updatedVocabulary });
         setVocabularyInput("");
@@ -158,7 +159,16 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
                 <div key={vocabIndex} className="vocabulary-item">
                   <p><strong>Word:</strong> {entry.vocab}</p>
                   <p><strong>Pronunciation:</strong> {entry.pronunciation}</p>
-
+                  {/* Check if audio exists, and render an audio element */}
+            {entry.audio && (
+              <div>
+                
+                <audio key={entry.audio} controls>
+                  <source src={entry.audio} type="audio/mpeg" />
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+            )}
                   {entry.meanings && entry.meanings.length > 0 && (
                     <>
                       <label className="label">Part of Speech:</label>
@@ -176,6 +186,7 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
 
                   <p><strong>Definition:</strong> {entry.definition}</p>
                   <p><strong>Example:</strong> {entry.example}</p>
+
                   <button
                     onClick={() => deleteVocabularyEntry(vocabIndex)}
                     className="delete-button"
