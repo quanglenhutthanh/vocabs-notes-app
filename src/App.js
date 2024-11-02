@@ -8,7 +8,7 @@ import { registerUser, loginUser, logoutUser } from './auth';
 
 function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [notes, setNotes] = useState({ vocabulary: [], text: "", link: [], createdDatetime: new Date().toISOString() });
+  const [notes, setNotes] = useState({ vocabulary: [], text: "", link: [] });
   const [noteType, setNoteType] = useState("vocabulary");
   const [storageType, setStorageType] = useState("firebase"); // Control where data is saved
   const [email, setEmail] = useState('');

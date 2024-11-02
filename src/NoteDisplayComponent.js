@@ -44,7 +44,7 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
       const data = await response.json();
       setLinkSummary(data.description || "No summary available");
       const updatedLink = [{ url, description: data.description }, ...(notes.link || [])];
-      onNotesChange({ ...notes, link:  updatedLink});
+      onNotesChange({ ...notes, link: updatedLink });
     } catch (error) {
       console.error("Error fetching link summary:", error);
       setLinkSummary("Error fetching summary");
@@ -65,13 +65,13 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
       if (data && data[0]) {
         const { meanings, phonetic, phonetics } = data[0];
 
-        let foundExample = "";
+        let examples = [];
         if (meanings) {
           for (let meaning of meanings) {
-            const exampleDefinition = meaning.definitions.find(def => def.example);
-            if (exampleDefinition) {
-              foundExample = exampleDefinition.example;
-              break;
+            for (let def of meaning.definitions) {
+              if (def.example && examples.length < 3) {
+                examples.push(def.example);
+              }
             }
           }
         }
@@ -79,11 +79,12 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
         const newVocabEntry = {
           vocab: word,
           partOfSpeech: meanings[0]?.partOfSpeech || "",
-          pronunciation: phonetic || (phonetics[0] ? phonetics[0].text : ""),
+          pronunciation: phonetic || (phonetics ? (phonetics.find(item => item.text)?.text) : ""),
           audio: phonetics[0] ? phonetics[0].audio : "",
-          definition: meanings[0]?.definitions[0]?.definition || "",
-          example: foundExample,
-          //meanings: meanings || []
+          definitions: meanings[0].definitions
+            .map(def => def.definition),
+            examples: examples,
+          meanings: meanings || []
         };
         console.log(newVocabEntry);
         const updatedVocabulary = [newVocabEntry, ...(notes.vocabulary || [])];
@@ -98,12 +99,27 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
 
   const handleMeaningChange = (index, vocabIndex) => {
     const selectedMeaning = notes.vocabulary[vocabIndex].meanings[index];
-    const selectedDefinition = selectedMeaning.definitions[0];
+    
+    const selectedDefinition = selectedMeaning.definitions
+      .map(def => def.definition);
+    console.log(selectedMeaning.definitions)
+
+    let examples = [];
+    if (selectedMeaning) {
+      for (let def of selectedMeaning.definitions) {
+        //for (let def of meaning.definitions) {
+          if (def.example && examples.length < 3) {
+            examples.push(def.example);
+          }
+        //}
+      }
+    }
+      
     const updatedVocabEntry = {
       ...notes.vocabulary[vocabIndex],
       partOfSpeech: selectedMeaning.partOfSpeech,
-      definition: selectedDefinition.definition,
-      example: selectedDefinition.example || ""
+      definitions: selectedDefinition,
+      example: examples || ""
     };
     const updatedVocabulary = notes.vocabulary.map((entry, i) => (i === vocabIndex ? updatedVocabEntry : entry));
     onNotesChange({ ...notes, vocabulary: updatedVocabulary });
@@ -137,7 +153,7 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
       </div>
       {noteType == "note" && (
         <div>
-            {notes.text}
+          {notes.text}
         </div>
       )
       }
@@ -160,15 +176,15 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
                   <p><strong>Word:</strong> {entry.vocab}</p>
                   <p><strong>Pronunciation:</strong> {entry.pronunciation}</p>
                   {/* Check if audio exists, and render an audio element */}
-            {entry.audio && (
-              <div>
-                
-                <audio key={entry.audio} controls>
-                  <source src={entry.audio} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
-            )}
+                  {entry.audio && (
+                    <div>
+
+                      <audio key={entry.audio} controls>
+                        <source src={entry.audio} type="audio/mpeg" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  )}
                   {entry.meanings && entry.meanings.length > 0 && (
                     <>
                       <label className="label">Part of Speech:</label>
@@ -184,8 +200,20 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
                     </>
                   )}
 
-                  <p><strong>Definition:</strong> {entry.definition}</p>
-                  <p><strong>Example:</strong> {entry.example}</p>
+                  <p><strong>Definition:</strong></p>
+                  <ul>
+                    {entry.definitions.map((definition, index) => (
+                      <li key={index}>{definition}</li>
+                    ))}
+                  </ul>
+                  
+
+                  <p><strong>Example:</strong></p>
+                  <ul>
+                    {entry.examples.map((example, index) => (
+                      <li key={index}>{example}</li>
+                    ))}
+                  </ul>
 
                   <button
                     onClick={() => deleteVocabularyEntry(vocabIndex)}
@@ -239,23 +267,23 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
 
           {notes.link && notes.link.length > 0 && (
             <div>
-               {notes.link.map((entry, linkIndex) => (
+              {notes.link.map((entry, linkIndex) => (
                 <div key={linkIndex} className="vocabulary-item">
-                  
+
 
                   <p><strong>Url:</strong> <a href={entry.url} target='_blank'>{entry.url}</a></p>
                   <p><strong>Description:</strong> {entry.description}</p>
-                  
+
                 </div>
               ))}
             </div>
           )}
           {chatGptResponse && (
-        <div className="chatgpt-response">
-          <h3>ChatGPT Response:</h3>
-          <p>{chatGptResponse}</p>
-        </div>
-      )}
+            <div className="chatgpt-response">
+              <h3>ChatGPT Response:</h3>
+              <p>{chatGptResponse}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
