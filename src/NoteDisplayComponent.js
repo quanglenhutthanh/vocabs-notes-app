@@ -79,7 +79,7 @@ const NoteDisplayComponent = ({ notes, onNotesChange }) => {
         const newVocabEntry = {
           vocab: word,
           partOfSpeech: meanings[0]?.partOfSpeech || "",
-          pronunciation: phonetic || (phonetics ? (phonetics.find(item => item.text)?.text) : ""),
+          pronunciation: phonetic || (Array.isArray(phonetics) && phonetics.find(item => item?.text)?.text) || "",
           audio: phonetics[0] ? phonetics[0].audio : "",
           definitions: meanings[0].definitions
             .map(def => def.definition),
